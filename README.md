@@ -3,6 +3,19 @@ MIR_inzynierka
 
 MIR BEng Thesis "Etykietowanie muzyki (music tagging) za pomocą metod sztucznej inteligencji"
 
+# Prototypical Network prediction APP
+
+This application was created to allow the user to train his own prototype network and on its basis to tag instruments in sound files.
+
+To run the applications, go to the *src* folder and then run the main program
+```
+cd src
+streamlit run main.py
+```
+
+<img src="./reports/figures/aplikacja.png" width="500" height="800">
+
+
 Project Organization
 ------------
 
