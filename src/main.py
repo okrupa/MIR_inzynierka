@@ -2,13 +2,19 @@ import streamlit as st
 
 import numpy as np
 from train import PredictionPrototypicalNet
-st.title("Delivery data prediction")
+st.title("Prototypical Network prediction")
 
-st.markdown('''This application was created to approximate the delivery time of an order.
+st.markdown('''This application was created to allow the user to train his own prototype network and on its basis to tag instruments in sound files.
 
+In the application we have a choice of pre-trained networks on datasets such as:
+* TinySOL
+* GoodSounds
+* MedleySolosDb
+* IRMAS
 ''')
+network_trained = False
 form_valid = False
-num_uploaders = st.slider("Number of classes", min_value=2, max_value=10)
+num_uploaders = st.slider("Number of classes to predict from", min_value=2, max_value=10)
 uploaded_files = []
 form = st.form(key="submit-form")
 
@@ -19,10 +25,11 @@ n_epoch = form.number_input("Number of epochs to train the model", step=1, min_v
 first_dataset = 'TinySOL'
 second_dataset = 'MedleySolosDb'
 third_dataset = 'GoodSounds'
-model_type = form.selectbox("Select model trained on:", [first_dataset, second_dataset, third_dataset])
+fouyh_dataset = 'IRMAS'
+model_type = form.selectbox("Select model trained on:", [first_dataset, second_dataset, third_dataset, fouyh_dataset])
 
 for i in range(num_uploaders):
-    label_name = form.text_input(f"Enter name of instrument", key=i)
+    label_name = form.text_input(f"Enter instrument name", key=i)
     uploaded_file = form.file_uploader("Upload audio data", type=["mp3","wav"], accept_multiple_files=True, key=f'file_uploader_{i}')
     if uploaded_file:
         uploaded_files.append([label_name, uploaded_file])
@@ -30,6 +37,8 @@ for i in range(num_uploaders):
 uploaded_predict_set = form.file_uploader("Upload data to predict", type=["mp3","wav"], accept_multiple_files=True, key=f'predict')
 classes = [x[0] for x in uploaded_files]
 num_of_samples = [len(x[1]) for x in uploaded_files]
+
+# check input data
 if not label_name.strip():
     st.error("Instrument name field is empty")
 elif n_epoch < 0:
@@ -53,12 +62,18 @@ generate = form.form_submit_button("Learn model and predict")
 
 if generate:
     if form_valid:
+        # choose neural network
         st.success("Data is valid, start training the model")
         if model_type =='TinySOL':
             model_t = "tinysol.ckpt"
-        else:
+        elif model_type =='MedleySolosDb':
             model_t = "medley_solo_db.ckpt"
-        checkpoint_path = f"C://Users//kolga//Desktop//apkainzynierka//streamlit//inzyniera//models//{model_t}"
+        if model_type =='GoodSounds':
+            model_t = "good_sounds.ckpt"
+        else:
+            model_t = "irmas.ckpt"
+        checkpoint_path = f".//models//{model_t}"
+        # learn and predict
         predict_network = PredictionPrototypicalNet(checkpoint_path, uploaded_files, uploaded_predict_set, int(num_uploaders), int(n_shot), int(q_set), int(n_epoch))
         predict_network.train()
         predict_network.predict()

@@ -70,7 +70,6 @@ class GivenData(ClassConditionalDataset):
       """
       audio_bytes = file.getvalue()
       y, sr = librosa.load(path=io.BytesIO(audio_bytes))
-    #   data, samplerate = sf.read(audio_bytes)
       total_duration = librosa.get_duration(y=y, sr=sr)
       if total_duration < duration:
           raise ValueError(f"Audio file is too short"

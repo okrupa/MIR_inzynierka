@@ -16,6 +16,8 @@ from datasets import GivenData, EpisodeDataset, prepare_datasets
 
 import csv
 import uuid
+
+#Klasa przeznaczona do dotrenowania wybranej sieci oraz predykcji zbioru danych
 class PredictionPrototypicalNet():
     def __init__(self, 
             checkpoint_path: str,
@@ -54,8 +56,10 @@ class PredictionPrototypicalNet():
 
         self.metric = Accuracy(num_classes=self.n_way, average="samples")
 
+    #Dotrenowanie modelu na wyznaczonej liczbie epok, następnie sprawdzenie średniej 
     def train(self):
         progress_bar = st.progress(0)
+        optimizer = torch.optim.Adam(self.learner.parameters(), lr=self.learner.learning_rate)
         for episode_idx in range(self.n_episodes):
             support, query = self.train_episodes[episode_idx]
 
@@ -68,11 +72,17 @@ class PredictionPrototypicalNet():
             # compute the accuracy
             acc = self.metric(logits, query["target"])
 
-            # print(f"Episode {episode_idx} // Accuracy: {acc.item():.2f}")
+            loss = self.learner.loss(logits, query["target"])
+
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()  
+
+            st.write(f"Episode {episode_idx} // Accuracy: {acc.item():.2f}")
             progress_bar.progress((100/self.n_episodes)*(episode_idx+1)/100)
-            st.write(f"Episode {episode_idx} | Accuracy: {acc.item():.2f}")
 
     def predict(self):
+        # predict input data
         sig = nn.Sigmoid()
         support, query, episode_classlist = self.train_episodes.predict_subsets(125, self.dataset_query)
 
@@ -87,10 +97,10 @@ class PredictionPrototypicalNet():
 
         outputs = sig(logits)
         _, predicted = torch.max(outputs, 1)
-        print(predicted)
+        # write each prediction and save to file
         new_title = f'<p style="font-family:serif; color:Black; font-size: 22px;">Prediction</p>'
         st.markdown(new_title, unsafe_allow_html=True)
-        path = f'C://Users//kolga//Desktop//apkainzynierka//streamlit//inzyniera//outputs/{str(uuid.uuid4())}.csv'
+        path = f'.//outputs/{str(uuid.uuid4())}.csv'
         f = open(path, 'w')
         writer = csv.writer(f)
         writer.writerow(['file', 'instrument'])
@@ -99,5 +109,5 @@ class PredictionPrototypicalNet():
             writer.writerow([name, episode_classlist[prediction]])
         f.close()
         with open(path) as f:
-            st.download_button('Download prediction', f)  # Defaults to 'text/plain'
+            st.download_button('Download prediction', f)
             
